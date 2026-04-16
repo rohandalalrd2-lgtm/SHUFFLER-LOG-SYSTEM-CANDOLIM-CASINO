@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CANDOLIM CASINO - Secured Log System</title>
+    <style>
+        :root {
+            --bg-body-blue: #F0F9FF; 
+            --bg-form-white: #FFFFFF; 
+            --input-bg: #F8FAFC; 
+            --primary-blue: #0284C7; 
+            --secondary-blue: #0369A1;
+            --accent-light-blue: #BAE6FD;
+            --text-main: #0F172A; 
+            --text-muted: #475569;
+            --border-blue: #BDE0FE; 
+            --border-focus: #0284C7; 
+            --btn-success: #10B981; --btn-warning: #CBD5E1; --btn-danger: #CBD5E1; --btn-info: #0284C7; 
+            --compulsory-red: #FEF2F2;
+        }
+        body { font-family: 'Inter', sans-serif; padding: 20px; text-transform: uppercase; color: var(--text-main); font-weight: 600; margin: 0; background: var(--bg-body-blue); min-height: 100vh; overflow-x: hidden; }
+        
+        /* --- PREMIUM AUTH OVERLAYS --- */
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        .overlay-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(8, 47, 73, 0.85); backdrop-filter: blur(8px); z-index: 10000; display: flex; justify-content: center; align-items: center; }
+        .login-box { background: #FFFFFF; padding: 50px 45px; border-radius: 16px; text-align: center; width: 420px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); border-top: 6px solid var(--primary-blue); animation: slideUp 0.5s ease-out; box-sizing: border-box;}
+        
+        .premium-input-wrapper { text-align: left; margin-bottom: 20px; }
+        .premium-input-wrapper label { font-size: 0.85rem; color: var(--text-muted); font-weight: 800; letter-spacing: 0.5px; margin-bottom: 6px; display: block; }
+        .premium-input { width: 100%; padding: 15px 16px; border: 2px solid var(--border-blue); border-radius: 8px; font-size: 1rem; text-transform: uppercase; color: var(--text-main); font-weight: 700; box-sizing: border-box; transition: 0.3s; background: var(--input-bg); }
+        .premium-input:focus { border-color: var(--primary-blue); background: #FFFFFF; box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.15); outline: none; }
+        
+        .btn-auth { background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue)); color: #FFFFFF; border: 1px solid var(--primary-blue); padding: 16px; font-size: 1.1rem; border-radius: 8px; text-transform: uppercase; font-weight: 900; letter-spacing: 1px; transition: 0.3s; box-shadow: 0 10px 15px -3px rgba(2, 132, 199, 0.4); width: 100%; cursor: pointer; }
+        .btn-auth:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 15px 20px -3px rgba(2, 132, 199, 0.5); filter: brightness(1.1); }
+        .btn-auth:disabled { opacity: 0.7; cursor: wait; }
+        
+        /* --- DEVICE LOCK OVERLAY --- */
+        #deviceLockOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #082F49; z-index: 99999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; text-align: center; border: 5px solid var(--primary-blue); box-sizing: border-box; }
+        #deviceLockOverlay h1 { font-size: 3rem; margin-bottom: 10px; color: var(--accent-light-blue); letter-spacing: 2px; }
+        #deviceLockOverlay p { font-size: 1.2rem; color: #E0F2FE; margin-bottom: 30px; letter-spacing: 1px; }
+
+        /* --- MAIN APP UI --- */
+        .container { position: relative; max-width: 1450px; margin: auto; background: var(--bg-body-blue); display: none; overflow: hidden; }
+        .header { background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue)); padding: 30px 0; text-align: center; border-radius: 11px; border-bottom: 4px solid var(--accent-light-blue); position: relative; box-shadow: 0 10px 15px rgba(0,0,0,0.1); margin-bottom: 30px;}
+        .header h3 { margin: 0; font-size: 2.8rem; letter-spacing: 3px; font-weight: 900; color: #FFFFFF; }
+        .black-text { color: #000000; }
+        
+        /* 3D BLUE POWER BUTTON LOGOUT */
+        .logout-btn-top { 
+            position: absolute; 
+            top: 15px; 
+            right: 25px; 
+            background: linear-gradient(to bottom, #0055FF, #001199); 
+            border: 2px solid #000B44; 
+            border-radius: 12px; 
+            cursor: pointer; 
+            color: #FFFFFF; 
+            transition: all 0.2s ease; 
+            padding: 8px 16px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center;
+            box-shadow: inset 0px 2px 2px rgba(255,255,255,0.4), 0px 4px 5px rgba(0,0,0,0.3);
+        }
+        .logout-btn-top:hover { 
+            transform: scale(1.05);
+            background: linear-gradient(to bottom, #1A6DFF, #001177); 
+            box-shadow: inset 0px 2px 2px rgba(255,255,255,0.5), 0px 6px 8px rgba(0,0,0,0.4);
+        }
+        .logout-btn-top svg { 
+            width: 22px; 
+            height: 22px; 
+            stroke-width: 3;
+            margin-bottom: 3px;
+        }
+        .logout-btn-top span { 
+            font-size: 0.65rem; 
+            font-weight: 900; 
+            letter-spacing: 0.5px; 
+            text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
+        }
+
+        .main-wrapper { display: flex; flex-direction: column; gap: 30px; }
+        .form-section, .search-container { background: #FFFFFF; padding: 30px; border-radius: 11px; border: 1px solid var(--border-blue); box-shadow: 0 10px 20px rgba(2, 132, 199, 0.05); }
+        .input-row { display: flex; gap: 18px; margin-bottom: 18px; flex-wrap: wrap; }
+        .input-group { flex: 1; min-width: 140px; position: relative; } 
+        label { font-weight: 800; display: block; margin-bottom: 11px; font-size: 0.9rem; color: var(--text-main); } 
+        .req-star { color: #EF4444; margin-left: 2px; } 
+        input:required { background-color: var(--compulsory-red); }
+        input:not(:placeholder-shown):required { background-color: var(--input-bg); }
+        input { width: 100%; padding: 12px; border: 1px solid var(--border-blue); border-radius: 6px; font-size: 0.9rem; text-transform: uppercase; color: var(--text-main); text-align: center; font-weight: 700; box-sizing: border-box; }
+        .update-highlight { background-color: #FEF08A !important; border: 1.5px solid #EAB308 !important; color: #000 !important; }
+        .action-bar { display: flex; gap: 12px; margin-top: 15px; padding: 15px; background: var(--input-bg); border-radius: 6px; border: 1px solid var(--border-blue); flex-wrap: wrap; }
+        .btn { padding: 14px 18px; border: none; border-radius: 6px; cursor: pointer; font-weight: 800; color: #FFFFFF; flex: 1; text-transform: uppercase; font-size: 0.85rem; min-width: 130px; transition: 0.2s opacity; }
+        .btn:disabled { opacity: 0.5; cursor: wait !important; }
+        .btn-save { background: #10B981; } .btn-update { background: #94A3B8; color: #000; } .btn-delete { background: #94A3B8; color: #000; } 
+        .btn-clear { background: #FFFFFF; color: #000; border: 1px solid var(--border-blue); cursor: pointer; font-weight: 800; } .btn-excel { background: #059669; } .btn-sync { background: var(--primary-blue); }
+        
+        .mode-toggle-container { display: flex; gap: 16px; }
+        .mode-btn { padding: 11px 22px; border-radius: 7px; font-weight: 900; cursor: pointer; font-size: 0.9rem; transition: 0.2s; letter-spacing: 0.5px; }
+        #typeShuffler { border: 2px solid var(--primary-blue); background: #FFF; color: var(--primary-blue); }
+        #typeShuffler.active { background: var(--primary-blue); color: #FFF; box-shadow: 0 4px 8px rgba(2, 132, 199, 0.3); }
+        #typeEshoe { border: 2px solid var(--secondary-blue); background: #FFF; color: var(--secondary-blue); }
+        #typeEshoe.active { background: var(--secondary-blue); color: #FFF; box-shadow: 0 4px 8px rgba(3, 105, 161, 0.3); }
+
+        .dropdown-list { display: none; position: absolute; z-index: 100; background: #FFF; width: 100%; max-height: 200px; overflow-y: auto; border: 1.5px solid var(--border-focus); border-radius: 6px; top: 100%; text-align: center; box-shadow: 0 10px 15px rgba(0,0,0,0.1); }
+        .dropdown-list:empty { display: none !important; border: none !important; }
+        .dropdown-list option { padding: 12px; cursor: pointer; border-bottom: 1px solid #F1F5F9; font-size: 0.85rem; color: #000; }
+        .table-wrapper { max-height: 500px; overflow-y: auto; border: 1px solid var(--border-blue); border-radius: 9px; background: #FFF; }
+        table { width: 100%; border-collapse: collapse; cursor: pointer; }
+        th, td { border-bottom: 1px solid var(--border-blue); padding: 15px; text-align: center; font-size: 0.9rem; white-space: nowrap; color: var(--text-main); }
+        th { background: var(--primary-blue); color: #FFFFFF; position: sticky; top: 0; z-index: 10; font-weight: 800; }
+        tr:nth-child(even) { background: #F8FAFC; } .selected-row { background: #DBEAFE !important; outline: 3px solid var(--primary-blue); }
+        #syncStatus { font-size: 0.85rem; color: #000; position: fixed; bottom: 10px; right: 20px; z-index: 1000; font-weight: 800; background: rgba(255,255,255,0.9); padding: 6px 12px; border: 1px solid var(--border-blue); border-radius: 6px; }
+    </style>
+</head>
+<body onclick="checkClickOutside(event)" onload="startSystem()">
+<div id="toast-container"></div>
+
+<div id="deviceLockOverlay">
+    <h1>UNAUTHORIZED DEVICE</h1>
+    <p>HARDWARE LOCKED. ENTER MASTER PIN.</p>
+    <div id="pinInputArea" style="display: none; flex-direction: column; align-items: center; width: 100%;">
+        <div class="premium-input-wrapper" style="width: 320px;">
+            <input type="password" id="masterPin" class="premium-input" autocomplete="off" style="text-align: center; font-size: 1.5rem; letter-spacing: 5px; color: #000;">
+        </div>
+        <button id="btnPinSubmit" class="btn-auth" onclick="verifyPin()" style="width: 320px;">AUTHORIZE TERMINAL</button>
+        <div id="pinError" style="color: #EF4444; font-size: 1rem; font-weight: 800; display: none; margin-top: 15px;">INCORRECT PIN</div>
+    </div>
+    <button id="authBtn" class="btn-auth" onclick="showPinInput()" style="width: 320px; margin-top: 20px;">ENTER PIN</button>
+</div>
+
+<div id="loginOverlay" class="overlay-bg" style="display:none;">
+    <div class="login-box">
+        <div style="margin-bottom: 30px;">
+            <h2 style="margin:0; font-size: 2.2rem; color: var(--primary-blue); font-weight: 900;">CANDOLIM <span style="color: var(--secondary-blue);">CASINO</span></h2>
+            <div style="font-size: 0.95rem; color: var(--text-muted); letter-spacing: 3px; margin-top: 5px; font-weight: 800;">SECURE PORTAL</div>
+        </div>
+        <div class="premium-input-wrapper">
+            <label>CANDOLIM ID</label>
+            <input type="text" id="loginUser" class="premium-input" autocomplete="off" required>
+        </div>
+        <div class="premium-input-wrapper">
+            <label>PASSWORD</label>
+            <input type="password" id="loginPass" class="premium-input" autocomplete="off" onkeypress="if(event.key === 'Enter') attemptLogin();" required>
+        </div>
+        <button id="btnLoginBtn" class="btn-auth" onclick="attemptLogin()" style="margin-top: 10px;">AUTHENTICATE</button>
+        <button class="btn-clear" onclick="openPasswordModal()" style="width: 100%; margin-top: 20px; font-size: 0.85rem; border: none; background: transparent; color: var(--text-muted); text-decoration: underline;">FORGOT / CHANGE PASSWORD</button>
+        <div id="loginError" style="color:#EF4444; margin-top:20px; display:none; font-weight:800; background: #FEF2F2; padding: 12px; border-radius: 8px; border: 1px solid #FCA5A5;">INVALID CREDENTIALS</div>
+    </div>
+</div>
+
+<div id="passwordOverlay" class="overlay-bg" style="display: none;">
+    <div class="login-box">
+        <div style="margin-bottom: 25px;">
+            <h2 style="margin:0; font-size: 1.8rem; color: var(--primary-blue); font-weight: 900;">UPDATE PASSWORD</h2>
+        </div>
+        <div class="premium-input-wrapper"><label>CANDOLIM ID</label><input type="text" id="changeUser" class="premium-input" autocomplete="off"></div>
+        <div class="premium-input-wrapper"><label>CURRENT PASSWORD</label><input type="password" id="oldPass" class="premium-input" autocomplete="off"></div>
+        <div class="premium-input-wrapper"><label>NEW PASSWORD</label><input type="password" id="newPass" class="premium-input" autocomplete="off"></div>
+        <div class="premium-input-wrapper"><label>CONFIRM NEW PASSWORD</label><input type="password" id="confirmPass" class="premium-input" autocomplete="off"></div>
+        <div style="display:flex; gap: 12px; margin-top: 10px;">
+            <button id="btnChangePass" class="btn-auth" onclick="submitPasswordChange()" style="flex: 2;">SAVE</button>
+            <button class="btn-clear" onclick="closePasswordModal()" style="flex: 1; border-radius: 8px; font-size: 0.9rem;">CANCEL</button>
+        </div>
+        <div id="passError" style="color: #EF4444; margin-top: 15px; display: none; font-weight: 800; background: #FEF2F2; padding: 10px; border-radius: 8px; border: 1px solid #FCA5A5;"></div>
+    </div>
+</div>
+
+<div class="container" id="mainContainer">
+    <div class="header">
+        <button class="logout-btn-top" onclick="logoutUser()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+                <line x1="12" y1="2" x2="12" y2="12"></line>
+            </svg>
+            <span>LOGOUT</span>
+        </button>
+        <h3 id="mainHeader">CANDOLIM CASINO <span class="black-text">SHUFFLER LOG</span></h3>
+    </div>
+    <div class="main-wrapper">
+        <div class="form-section">
+            <div class="input-row">
+                <div class="input-group"><label>GAMING DATE <span class="req-star">*</span></label><input type="date" id="date" required></div>
+                <div class="input-group"><label>LOG TIME <span class="req-star">*</span></label><input type="time" id="time" required></div>
+                <div class="input-group"><label>REPORTED BY <span class="req-star">*</span></label><input type="text" id="informedBy" autocomplete="off" required></div>
+                <div class="input-group"><label style="color: var(--text-muted);">DEALER</label><input type="text" id="dealer" autocomplete="off"></div>
+                <div class="input-group"><label>TABLE NO <span class="req-star">*</span></label><input type="text" id="tableNo" autocomplete="off" onfocus="showList('tableSelect')" onkeyup="filterList('tableNo', 'tableSelect')" onblur="setTimeout(()=>document.getElementById('tableSelect').style.display='none',150)" required><select id="tableSelect" class="dropdown-list" size="5"></select></div>
+                <div class="input-group"><label id="modelLabel">SHUFFLER TYPE <span class="req-star">*</span></label><input type="text" id="shuffler" autocomplete="off" onfocus="showList('shfSelect')" onkeyup="filterList('shuffler', 'shfSelect')" onblur="setTimeout(()=>document.getElementById('shfSelect').style.display='none',150)" required><select id="shfSelect" class="dropdown-list" size="5"></select></div>
+            </div>
+            <div class="input-row">
+                <div class="input-group"><label>ASSET NUMBER <span class="req-star">*</span></label><input type="text" id="assetNo" autocomplete="off" required></div>
+                <div class="input-group"><label>ERROR MESSAGE <span class="req-star">*</span></label><input type="text" id="error" autocomplete="off" onfocus="showList('errorSelect')" onkeyup="filterList('error', 'errorSelect')" onblur="setTimeout(()=>document.getElementById('errorSelect').style.display='none',150)" required><select id="errorSelect" class="dropdown-list" size="5"></select></div>
+                <div class="input-group"><label>SURVEILLANCE <span class="req-star">*</span></label><input type="text" id="surveillance" autocomplete="off" onfocus="showList('survSelect')" onkeyup="filterList('surveillance', 'survSelect')" onblur="setTimeout(()=>document.getElementById('survSelect').style.display='none',150)" required><select id="survSelect" class="dropdown-list" size="5"></select></div>
+                <div class="input-group"><label>TECHNICIAN <span class="req-star">*</span></label><input type="text" id="tech" autocomplete="off" onfocus="showList('techSelect')" onkeyup="filterList('tech', 'techSelect')" onblur="setTimeout(()=>document.getElementById('techSelect').style.display='none',150)" required><select id="techSelect" class="dropdown-list" size="5"></select></div>
+                <div class="input-group" style="flex:2;"><label style="color: var(--text-muted);">REMARKS</label><input type="text" id="remarks" autocomplete="off"></div>
+            </div>
+            <div class="action-bar">
+                <button id="btnSave" class="btn btn-save" onclick="saveData()">SAVE NEW RECORD</button>
+                <button id="btnUpdate" class="btn btn-update" onclick="updateData()" disabled>UPDATE SELECTED</button>
+                <button id="btnDelete" class="btn btn-delete" onclick="deleteData()" disabled>DELETE</button>
+                <button class="btn btn-clear" onclick="deselect()">CLEAR FORM</button>
+                <button class="btn btn-excel" onclick="exportExcel()">EXPORT EXCEL</button>
+                <button id="btnSync" class="btn btn-sync" onclick="syncFromServer(true)">SYNC NOW</button>
+            </div>
+        </div>
+        <div class="search-container">
+            <div style="display:flex; gap:13px; align-items:center;">
+                <div style="background:var(--input-bg); padding:9px; border-radius:7px; border:1px solid var(--border-blue);"><span style="font-size:1rem; color:#000;">VIEW MONTH:</span><select id="monthSelector" onchange="syncFromServer(true)" style="background:transparent; color:var(--primary-blue); border:none; width:auto; font-weight:900;"></select></div>
+                <input type="text" id="tableSearch" placeholder="SEARCH..." onkeyup="applyFilters()" style="flex:1;" autocomplete="off">
+            </div>
+            <div style="display:flex; gap:9px; align-items:center; flex-wrap:wrap;">
+                <div style="display:flex; gap:9px; align-items:center; background:var(--input-bg); padding:9px; border-radius:7px; border:1px solid var(--border-blue);">
+                    <span style="font-size:1rem; color:#000;">FROM:</span>
+                    <input type="date" id="filterDateFrom" onchange="applyFilters()" style="width:130px; background:#FFF;" autocomplete="off">
+                    <span style="font-size:1rem; color:#000;">TO:</span>
+                    <input type="date" id="filterDateTo" onchange="applyFilters()" style="width:130px; background:#FFF;" autocomplete="off">
+                    <button onclick="clearDateFilter()" style="cursor:pointer; font-size: 0.9rem; padding: 6px 12px; border-radius: 4px; border: 1px solid var(--border-blue); background: #FFF; font-weight: 700;">CLEAR</button>
+                </div>
+                <div class="mode-toggle-container">
+                    <button id="typeShuffler" class="mode-btn active" onclick="switchMode('SHUFFLER')">SHUFFLER LOGS</button>
+                    <button id="typeEshoe" class="mode-btn" onclick="switchMode('ESHOE')">E-SHOE LOGS</button>
+                </div>
+                <div id="totalCount" style="margin-left:auto; background:var(--accent-light-blue); color:var(--primary-blue); padding:11px 22px; border-radius:7px; font-weight:900;">TOTAL: <span>0</span></div>
+                <button onclick="toggleSort()" id="sortToggleBtn" style="padding:11px 18px; border-radius:7px; border: 1.2px solid var(--border-blue); cursor:pointer; font-weight:900; background:#FFF;">SORT: NEWEST ↓</button>
+            </div>
+            <div class="table-wrapper"><table id="dataTable"><thead><tr><th>SR.</th><th>DATE</th><th>TIME</th><th>INFORMED</th><th>DEALER</th><th>TABLE</th><th>MODEL</th><th>ASSET</th><th>ERROR</th><th>SURV</th><th>TECH</th><th>REMARKS</th></tr></thead><tbody></tbody></table></div>
+        </div>
+    </div>
+    <div id="syncStatus">AWAITING LOGIN...</div>
+</div>
+
+<script>
+    // --- CRITICAL: PASTE YOUR GOOGLE SCRIPT URL BELOW ---
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzkia7OL8cz1QhcFQ2bqfAoM51o_qGESGrt_RyC1tnZvXiri0Uv2puuobU7dKpfyP44/exec"; 
+    
+    let activeLogType = "SHUFFLER"; let globalSettings = { techs: [], tables: [], surveillance: [], errors: {} };
+    let selectedRow = null; let sortDescending = true; let idleTimer;
+
+    window.addEventListener("beforeunload", function() {
+        const u = sessionStorage.getItem("shufflerAuthToken"); 
+        const sid = sessionStorage.getItem("shufflerSessionId");
+        if(u && sid) {
+            let dt = getGamingDT(); 
+            fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", keepalive: true, body: JSON.stringify({ action: "LOG_SESSION", eventType: "LOGOUT", sessionId: sid, username: u, date: dt.date, time: dt.time }) });
+        }
+    });
+
+    function startSystem() {
+        const reg = localStorage.getItem("shufflerDeviceRegistered"); const exp = localStorage.getItem("shufflerDeviceExpiry");
+        if (reg === "true" && exp && Date.now() < parseInt(exp)) {
+            document.getElementById('deviceLockOverlay').style.display = 'none';
+            const savedUser = sessionStorage.getItem("shufflerAuthToken");
+            if (savedUser) { 
+                const sid = "SID-" + Date.now();
+                sessionStorage.setItem("shufflerSessionId", sid);
+                let dt = getGamingDT();
+                fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", keepalive: true, body: JSON.stringify({ action: "LOG_SESSION", eventType: "LOGIN", sessionId: sid, username: savedUser, date: dt.date, time: dt.time }) });
+                unlockDashboard(); 
+            } else { document.getElementById('loginOverlay').style.display = 'flex'; }
+        } else { document.getElementById('deviceLockOverlay').style.display = 'flex'; }
+        resetIdleTimer();
+    }
+
+    function resetIdleTimer() { clearTimeout(idleTimer); idleTimer = setTimeout(() => { if (sessionStorage.getItem("shufflerAuthToken")) { alert("LOCKED DUE TO INACTIVITY."); logoutUser(); } }, 600000); }
+    document.onmousemove = resetIdleTimer; document.onmousedown = resetIdleTimer; document.onclick = resetIdleTimer; document.onkeypress = resetIdleTimer;
+
+    function verifyPin() { 
+        const btn = document.getElementById('btnPinSubmit');
+        if (document.getElementById('masterPin').value === "86826") { 
+            btn.innerText = "AUTHORIZING...";
+            localStorage.setItem("shufflerDeviceRegistered", "true"); 
+            localStorage.setItem("shufflerDeviceExpiry", (Date.now() + 60*24*60*60*1000).toString()); 
+            document.getElementById('deviceLockOverlay').style.display = 'none'; 
+            document.getElementById('loginOverlay').style.display = 'flex'; 
+        } else { document.getElementById('pinError').style.display = 'block'; } 
+    }
+    function showPinInput() { document.getElementById('authBtn').style.display = 'none'; document.getElementById('pinInputArea').style.display = 'flex'; document.getElementById('masterPin').focus(); }
+
+    // V53 UPDATE: Unified Gaming Date logic. Automatically shifts dates before 8 AM back by 1 day.
+    function getGamingDateForInput() {
+      let now = new Date(); 
+      if (now.getHours() < 8) { now.setDate(now.getDate() - 1); }
+      let p = (n) => String(n).padStart(2,'0');
+      return `${now.getFullYear()}-${p(now.getMonth()+1)}-${p(now.getDate())}`;
+    }
+    
+    function getCurrentTimeForInput() {
+      let now = new Date(); let p = (n) => String(n).padStart(2,'0');
+      return `${p(now.getHours())}:${p(now.getMinutes())}`;
+    }
+    
+    function getGamingDT() {
+      let now = new Date();
+      let realTime = new Date();
+      if (now.getHours() < 8) { now.setDate(now.getDate() - 1); }
+      let p = (n) => String(n).padStart(2,'0');
+      return { 
+          date: `${p(now.getDate())}-${p(now.getMonth()+1)}-${now.getFullYear()}`, 
+          time: `${p(realTime.getHours())}:${p(realTime.getMinutes())}` 
+      };
+    }
+    
+    // Sort Helper: Treats times before 8 AM as belonging to the end of the shift
+    function getWeightedTime(t) { 
+        if(!t) return 0;
+        let [h, m] = t.split(':').map(Number); 
+        return (h < 8) ? (h + 24) * 60 + m : h * 60 + m; 
+    }
+
+    async function attemptLogin() {
+        const u = document.getElementById('loginUser').value.trim(), p = document.getElementById('loginPass').value.trim();
+        if(!u || !p) return;
+        const btn = document.getElementById('btnLoginBtn'); btn.innerText = "AUTHENTICATING..."; btn.disabled = true;
+        try {
+            const r = await fetch(`${SCRIPT_URL}?action=LOGIN&username=${encodeURIComponent(u)}&password=${encodeURIComponent(p)}`);
+            const d = await r.json(); 
+            if (d.status === "success") { 
+                const sid = "SID-" + Date.now();
+                sessionStorage.setItem("shufflerSessionId", sid);
+                sessionStorage.setItem("shufflerAuthToken", d.name); 
+                let dt = getGamingDT(); 
+                fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", keepalive: true, body: JSON.stringify({ action: "LOG_SESSION", eventType: "LOGIN", sessionId: sid, username: d.name, date: dt.date, time: dt.time }) });
+                unlockDashboard(); 
+            } else { document.getElementById('loginError').style.display = 'block'; btn.innerText = "AUTHENTICATE"; btn.disabled = false; }
+        } catch (e) { btn.innerText = "AUTHENTICATE"; btn.disabled = false; }
+    }
+
+    function unlockDashboard() { document.getElementById('loginOverlay').style.display = 'none'; document.getElementById('mainContainer').style.display = 'block'; initApp(); }
+    function initApp() { fetchDynamicSettings(); switchMode('SHUFFLER'); setInterval(() => syncFromServer(false), 30000); }
+
+    async function syncFromServer(f = false) {
+        const btn = document.getElementById('btnSync');
+        if(f) { btn.innerText = "SYNCING..."; btn.disabled = true; }
+        const m = document.getElementById('monthSelector').value;
+        const res = await fetch(`${SCRIPT_URL}?type=${activeLogType}&month=${encodeURIComponent(m)}`);
+        const d = await res.json(); 
+        if (d.records) { 
+          updateMonthDropdown(d.months, d.currentView); 
+          
+          // V53 UPDATE: Sort purely by the date stored, then by weighted gaming time
+          d.records.sort((a, b) => {
+            let dateA = a.date.split('-').reverse().join('');
+            let dateB = b.date.split('-').reverse().join('');
+            if (dateA !== dateB) { return sortDescending ? dateB.localeCompare(dateA) : dateA.localeCompare(dateB); }
+            let wA = getWeightedTime(a.time); 
+            let wB = getWeightedTime(b.time);
+            return sortDescending ? wB - wA : wA - wB;
+          });
+          
+          renderTable(d.records); document.getElementById('syncStatus').innerText = "UPDATED: " + new Date().toLocaleTimeString(); 
+        }
+        if(f) { btn.innerText = "SYNC NOW"; btn.disabled = false; }
+    }
+
+    function renderTable(l) { 
+        const tb = document.querySelector('#dataTable tbody'); tb.innerHTML = ""; 
+        l.forEach((item, index) => { 
+            const r = tb.insertRow(); r.setAttribute("data-id", item.id);
+            r.insertCell(0).innerText = index + 1; r.insertCell(1).innerText = item.date; r.insertCell(2).innerText = item.time; r.insertCell(3).innerText = item.informedBy; r.insertCell(4).innerText = item.dealer; r.insertCell(5).innerText = item.tableNo; r.insertCell(6).innerText = item.shuffler; r.insertCell(7).innerText = item.assetNo; r.insertCell(8).innerText = item.error; r.insertCell(9).innerText = item.surveillance; r.insertCell(10).innerText = item.tech; r.insertCell(11).innerText = item.remarks; 
+        }); 
+        applyFilters(); 
+    }
+
+    document.querySelector('#dataTable tbody').addEventListener('click', e => {
+        const row = e.target.closest('tr'); if(!row) return;
+        if(selectedRow) selectedRow.classList.remove('selected-row'); 
+        selectedRow = row; row.classList.add('selected-row');
+        document.getElementById('btnSave').disabled = true; document.getElementById('btnUpdate').disabled = false; document.getElementById('btnDelete').disabled = false;
+        
+        const ids = ["time", "informedBy", "dealer", "tableNo", "shuffler", "assetNo", "error", "surveillance", "tech", "remarks"];
+        ids.forEach((id, j) => { const el = document.getElementById(id); el.value = row.cells[j+2].innerText; el.classList.add('update-highlight'); });
+        
+        const dateEl = document.getElementById('date');
+        if(row.cells[1].innerText) { dateEl.value = row.cells[1].innerText.split('-').reverse().join('-'); }
+        dateEl.classList.add('update-highlight');
+
+        handleShufflerChange();
+    });
+
+    function deselect() { 
+        if(selectedRow) selectedRow.classList.remove('selected-row'); selectedRow = null;
+        ["time", "informedBy", "dealer", "tableNo", "shuffler", "assetNo", "error", "surveillance", "tech", "remarks"].forEach(id => {
+            const el = document.getElementById(id); el.value = ""; el.classList.remove('update-highlight');
+        }); 
+        
+        const dateEl = document.getElementById('date'); 
+        // V53 UPDATE: Automatically shifts date box back by 1 day if it is before 8:00 AM
+        dateEl.value = getGamingDateForInput(); 
+        dateEl.classList.remove('update-highlight');
+        document.getElementById('time').value = getCurrentTimeForInput();
+        
+        document.getElementById('btnSave').disabled = false; document.getElementById('btnUpdate').disabled = true; document.getElementById('btnDelete').disabled = true;
+    }
+
+    function switchMode(m) {
+        activeLogType = m; 
+        document.getElementById('typeShuffler').classList.toggle('active', m === 'SHUFFLER'); 
+        document.getElementById('typeEshoe').classList.toggle('active', m === 'ESHOE');
+        const header = document.getElementById('mainHeader');
+        header.innerHTML = m === 'SHUFFLER' ? 'CANDOLIM CASINO <span class="black-text">SHUFFLER LOG</span>' : 'CANDOLIM CASINO <span class="black-text">E-SHOE LOG</span>';
+        document.getElementById('modelLabel').innerHTML = m === 'SHUFFLER' ? 'SHUFFLER TYPE <span class="req-star">*</span>' : 'E-SHOE TYPE <span class="req-star">*</span>';
+        applySettingsToUI(); deselect(); syncFromServer(true);
+    }
+
+    async function fetchDynamicSettings() { try { const r = await fetch(SCRIPT_URL + "?action=GET_SETTINGS"); const d = await r.json(); if (d.status === "success") { globalSettings = d.settings; applySettingsToUI(); } } catch (e) {} }
+    function applySettingsToUI() { 
+        populateDropdown('techSelect', 'tech', globalSettings.techs); populateDropdown('tableSelect', 'tableNo', globalSettings.tables); populateDropdown('survSelect', 'surveillance', globalSettings.surveillance); 
+        const types = activeLogType === 'SHUFFLER' ? ["DECKMATE", "MFS", "SK-2", "IDEAL", "APLUS", "MD"] : [];
+        populateDropdown('shfSelect', 'shuffler', types); handleShufflerChange(); 
+    }
+    function handleShufflerChange() { const m = document.getElementById('shuffler').value || (activeLogType === 'ESHOE' ? 'ESHOE' : ''); populateDropdown('errorSelect', 'error', globalSettings.errors[m] || []); }
+    function populateDropdown(s, i, d) { const el = document.getElementById(s); el.innerHTML = ""; const items = [...new Set(d.filter(v => v && v.trim()))].sort(); if(!items.length) { el.style.display = "none"; return; } items.forEach(v => { const o = document.createElement('option'); o.value = o.text = v; o.onmousedown = (e) => { e.preventDefault(); document.getElementById(i).value = v; el.style.display = "none"; handleShufflerChange(); }; el.appendChild(o); }); }
+    function showList(id) { if(document.getElementById(id).children.length) document.getElementById(id).style.display = "block"; }
+    
+    // V53 UPDATE: Filter by directly reading the stored date, no backend math needed!
+    function applyFilters() { 
+        const s = document.getElementById("tableSearch").value.toUpperCase(); 
+        const fDate = document.getElementById("filterDateFrom").value;
+        const tDate = document.getElementById("filterDateTo").value;   
+        let fNum = fDate ? parseInt(fDate.replace(/-/g, '')) : 0; 
+        let tNum = tDate ? parseInt(tDate.replace(/-/g, '')) : 99999999;
+        const rows = document.querySelector("#dataTable tbody").rows; 
+        let visibleCount = 0;
+
+        for (let r of rows) { 
+            let txtMatch = r.innerText.toUpperCase().includes(s);
+            let dateCell = r.cells[1].innerText; 
+            let dParts = dateCell.split('-');
+            let rNum = parseInt(dParts[2] + dParts[1] + dParts[0]); 
+            let dateMatch = (rNum >= fNum && rNum <= tNum);
+
+            if(txtMatch && dateMatch) { r.style.display = ""; visibleCount++; } 
+            else { r.style.display = "none"; }
+        } 
+        document.querySelector('#totalCount span').innerText = visibleCount;
+    }
+
+    function formatDateInput(i) { let v = i.value.replace(/\D/g, ''); if (v.length > 2) v = v.slice(0, 2) + '-' + v.slice(2); if (v.length > 5) v = v.slice(0, 5) + '-' + v.slice(5); i.value = v; }
+    
+    function validateForm() {
+        const requiredIds = ["date", "time", "informedBy", "tableNo", "shuffler", "assetNo", "error", "surveillance", "tech"];
+        for(let id of requiredIds) { if(!document.getElementById(id).value.trim()) { alert("PLEASE FILL ALL COMPULSORY FIELDS."); document.getElementById(id).focus(); return false; } }
+        return true;
+    }
+
+    function saveData() { 
+        if(!validateForm()) return; 
+        const btn = document.getElementById('btnSave'); btn.innerText = "SAVING..."; btn.disabled = true;
+        const d = { id: "ID-" + Date.now(), action: "SAVE", actionUser: sessionStorage.getItem("shufflerAuthToken"), logType: activeLogType }; 
+        ["time", "informedBy", "dealer", "tableNo", "shuffler", "assetNo", "error", "surveillance", "tech", "remarks"].forEach(id => d[id] = document.getElementById(id).value.toUpperCase()); 
+        
+        let rawDate = document.getElementById('date').value; 
+        d.date = rawDate ? rawDate.split('-').reverse().join('-') : "";
+        fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(d) }).then(() => { syncFromServer(true); deselect(); btn.innerText = "SAVE NEW RECORD"; btn.disabled = false; }); 
+    }
+
+    function updateData() { 
+        if(!selectedRow) return; if(!validateForm()) return; 
+        const btn = document.getElementById('btnUpdate'); btn.innerText = "UPDATING..."; btn.disabled = true;
+        const d = { id: selectedRow.getAttribute("data-id"), action: "UPDATE", actionUser: sessionStorage.getItem("shufflerAuthToken"), logType: activeLogType }; 
+        ["time", "informedBy", "dealer", "tableNo", "shuffler", "assetNo", "error", "surveillance", "tech", "remarks"].forEach(id => d[id] = document.getElementById(id).value.toUpperCase()); 
+        
+        let rawDate = document.getElementById('date').value; 
+        d.date = rawDate ? rawDate.split('-').reverse().join('-') : "";
+        fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(d) }).then(() => { syncFromServer(true); deselect(); btn.innerText = "UPDATE SELECTED"; btn.disabled = false; }); 
+    }
+
+    function deleteData() { if(!selectedRow || !confirm("DELETE THIS LOG?")) return; const btn = document.getElementById('btnDelete'); btn.innerText = "DELETING..."; btn.disabled = true; const d = { id: selectedRow.getAttribute("data-id"), action: "DELETE", logType: activeLogType }; fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(d) }).then(() => { syncFromServer(true); deselect(); btn.innerText = "DELETE"; btn.disabled = false; }); }
+    
+    async function submitPasswordChange() {
+        const btn = document.getElementById('btnChangePass'); btn.innerText = "UPDATING..."; btn.disabled = true;
+        const user = document.getElementById('changeUser').value.trim(), oldP = document.getElementById('oldPass').value.trim(), newP = document.getElementById('newPass').value.trim(), confP = document.getElementById('confirmPass').value.trim();
+        if(!user || !oldP || !newP || !confP) { alert("ALL FIELDS REQUIRED"); btn.innerText = "SAVE"; btn.disabled = false; return; }
+        try {
+            const r = await fetch(`${SCRIPT_URL}?action=CHANGE_PASSWORD&username=${encodeURIComponent(user)}&oldPassword=${encodeURIComponent(oldP)}&newPassword=${encodeURIComponent(newP)}`);
+            const d = await r.json(); if(d.status === "success") { alert("PASSWORD UPDATED!"); closePasswordModal(); } else { alert(d.message); }
+        } catch(e) {} btn.innerText = "SAVE"; btn.disabled = false;
+    }
+    
+    function logoutUser() { 
+        let dt = getGamingDT(); const u = sessionStorage.getItem("shufflerAuthToken"); const sid = sessionStorage.getItem("shufflerSessionId"); 
+        if(u && sid) { fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", keepalive: true, body: JSON.stringify({ action: "LOG_SESSION", eventType: "LOGOUT", sessionId: sid, username: u, date: dt.date, time: dt.time }) }); } 
+        sessionStorage.removeItem("shufflerAuthToken"); sessionStorage.removeItem("shufflerSessionId"); setTimeout(() => { location.reload(); }, 400);
+    }
+    
+    function openPasswordModal() { document.getElementById('loginOverlay').style.display = 'none'; document.getElementById('passwordOverlay').style.display = 'flex'; document.getElementById('changeUser').value = document.getElementById('loginUser').value; }
+    function closePasswordModal() { document.getElementById('passwordOverlay').style.display = 'none'; document.getElementById('loginOverlay').style.display = 'flex'; }
+    function updateMonthDropdown(ms, cv) { const sel = document.getElementById('monthSelector'); sel.innerHTML = ""; ms.forEach(m => { let o = document.createElement('option'); o.value = o.text = m; if (m === cv) o.selected = true; sel.appendChild(o); }); }
+    function checkClickOutside(e) { if (!e.target.closest('#dataTable') && !e.target.closest('.form-section')) deselect(); }
+    function toggleSort() { sortDescending = !sortDescending; syncFromServer(true); }
+    function clearDateFilter() { document.getElementById("filterDateFrom").value=""; document.getElementById("filterDateTo").value=""; applyFilters(); }
+    function exportExcel() { let csv = []; let rows = document.querySelectorAll("#dataTable tr"); for (let r of rows) { if (r.style.display !== "none") { let cols = Array.from(r.querySelectorAll("th, td")).map(c => '"' + c.innerText.replace(/"/g, '""') + '"'); csv.push(cols.join(",")); } } let b = new Blob(["\uFEFF" + csv.join("\r\n")], { type: 'text/csv;charset=utf-8;' }); let url = URL.createObjectURL(b); let a = document.createElement("a"); a.href = url; a.download = "CANDOLIM_CASINO_LOG.csv"; a.click(); }
+</script>
+</body>
+</html>
