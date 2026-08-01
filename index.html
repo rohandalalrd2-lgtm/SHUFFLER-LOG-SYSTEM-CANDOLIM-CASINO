@@ -115,7 +115,7 @@
         #syncStatus { font-size: 0.85rem; color: #000; position: fixed; bottom: 10px; right: 20px; z-index: 1000; font-weight: 800; background: rgba(255,255,255,0.9); padding: 6px 12px; border: 1px solid var(--border-blue); border-radius: 6px; }
     </style>
 </head> 
-}
+<body>
 <div id="toast-container"></div>
 
 <div id="deviceLockOverlay">
@@ -492,6 +492,9 @@
     function toggleSort() { sortDescending = !sortDescending; syncFromServer(true); }
     function clearDateFilter() { document.getElementById("filterDateFrom").value=""; document.getElementById("filterDateTo").value=""; applyFilters(); }
     function exportExcel() { let csv = []; let rows = document.querySelectorAll("#dataTable tr"); for (let r of rows) { if (r.style.display !== "none") { let cols = Array.from(r.querySelectorAll("th, td")).map(c => '"' + c.innerText.replace(/"/g, '""') + '"'); csv.push(cols.join(",")); } } let b = new Blob(["\uFEFF" + csv.join("\r\n")], { type: 'text/csv;charset=utf-8;' }); let url = URL.createObjectURL(b); let a = document.createElement("a"); a.href = url; a.download = "CANDOLIM_CASINO_LOG.csv"; a.click(); }
+    
+    // START SYSTEM ON LOAD
+    window.onload = startSystem;
 </script>
 </body>
 </html>
